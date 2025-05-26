@@ -28,6 +28,7 @@ class Controleur:
         self.tour_selectionnee = None
         self.dernier_coup_correct = False
         
+        
         # Démarrer une partie par défaut
         self.demarrer_partie(3, False)
         
@@ -91,7 +92,12 @@ class Controleur:
                     score_final = max(1000 - self.jeuhanoi.nbr_coups * 10 - int(self.jeuhanoi.chrono) * 5, 0)
                     self.jeuhanoi.ajouter_score(score_final)
                     self.vue.mettre_a_jour_interface(self.jeuhanoi)
-                    messagebox.showinfo("Félicitations", 
+                    if self.jeuhanoi.mode_jeu =='auto':
+                        messagebox.showinfo("Résolution époustouflante", 
+                        f"Résolution automatique en {self.jeuhanoi.nbr_coups} coups et {int(self.jeuhanoi.chrono)} secondes!")
+        
+                    else: 
+                        messagebox.showinfo("Félicitations", 
                                     f"Vous avez gagné en {self.jeuhanoi.nbr_coups} coups et {int(self.jeuhanoi.chrono)} secondes!")
         else:
             self.dernier_coup_correct = False
@@ -150,11 +156,40 @@ class Controleur:
                     self.jeuhanoi.tours[arrivee-1], True
                 )
             
-                self.vue.fenetre.after(500, lambda: executer_mouvement(index + 1))
+                self.vue.fenetre.after(400, lambda: executer_mouvement(index + 1))
         
         # Démarrer l'exécution automatique
-        self.vue.fenetre.after(500, lambda: executer_mouvement(0))
+        self.vue.fenetre.after(400, lambda: executer_mouvement(0))
         
+
+    def demander_aide(self):
+        """
+        Récupère le premier mouvement de la résolution automatique
+        et l'exécute pour aider le joueur.
+        """
+        if not self.jeuhanoi.etat_partie: # Vérifier si une partie est en cours
+            messagebox.showinfo("Aide", "Aucune partie en cours pour recevoir de l'aide.")
+            return
+
+        # Obtenir la séquence complète de mouvements à partir de l'état actuel
+        mouvements_aide = self.jeuhanoi.resoudre_automatiquement() #
+
+        if mouvements_aide: # S'il y a des mouvements disponibles
+            # Récupérer le tout premier mouvement
+            depart_num, arrivee_num = mouvements_aide[0] 
+
+            # Convertir les numéros de tour (1, 2, 3) en objets Tour (0-indexés)
+            tour_depart_obj = self.jeuhanoi.tours[depart_num - 1]
+            tour_arrivee_obj = self.jeuhanoi.tours[arrivee_num - 1]
+
+            # Exécuter ce premier mouvement
+            self.gerer_deplacement_joueur(tour_depart_obj, tour_arrivee_obj, resolution_auto=False) 
+
+
+
+
+
+
     def activer_ordre_aleatoire(self):
         """
         Active le mode où les disques sont placés dans un ordre illégal au départ.

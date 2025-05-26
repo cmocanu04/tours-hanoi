@@ -162,87 +162,91 @@ class JeuHanoi:
     
     ###############################
 
-    def _calculate_heuristic(self, current_state_tuple, all_disk_sizes_sorted_asc_list, target_peg_idx):
+    def _calculer_heuristique(self, etat_actuel_tuple, liste_tailles_disques_asc, idx_tour_cible):
         """
         Calcule l'heuristique h(n) pour l'état actuel.
         Heuristique : Pour chaque disque i, si non sur la tour cible, +1.
-                    Si sur la tour cible mais un disque j < i est en dessous, +2.
+        Args:
+            etat_actuel_tuple (tuple): L'état courant sous forme de tuple de tuples.
+            liste_tailles_disques_asc (list): Liste des tailles de disques du plus petit au plus grand.
+            idx_tour_cible (int): Index de la tour cible.
+        Returns:
+            int: Valeur heuristique pour l'état courant.
         """
         h = 0
         # Parcourt chaque disque du plus petit au plus grand
-        for disk_to_check_size in all_disk_sizes_sorted_asc_list: # Itère du plus petit au plus grand
-            disk_found_at_peg = -1
-            disk_found_at_index_on_peg = -1 # Index dans le tuple de la tour (0 = fond)
+        for taille_disque in liste_tailles_disques_asc:  # Itère du plus petit au plus grand
+            tour_trouvee = -1
+            index_disque_sur_tour = -1  # Index dans le tuple de la tour (0 = fond)
 
             # Recherche sur quelle tour se trouve le disque
-            for peg_idx, peg_content_tuple in enumerate(current_state_tuple):
+            for idx_tour, contenu_tour_tuple in enumerate(etat_actuel_tuple):
                 try:
                     # Trouve l'index du disque sur cette tour.
                     # Rappel: le tuple de la tour est (fond, ..., sommet)
-                    disk_found_at_index_on_peg = peg_content_tuple.index(disk_to_check_size)
-                    disk_found_at_peg = peg_idx
-                    break 
+                    index_disque_sur_tour = contenu_tour_tuple.index(taille_disque)
+                    tour_trouvee = idx_tour
+                    break
                 except ValueError:
-                    continue # Disque non trouvé sur cette tour
-            
-            if disk_found_at_peg == -1:
-                # Cela ne devrait pas arriver dans un état valide de Hanoï si tous les disques sont suivis
-                # print(f"Avertissement : Disque {disk_to_check_size} non trouvé dans l'état {current_state_tuple}")
-                continue 
+                    continue  # Disque non trouvé sur cette tour
 
-            if disk_found_at_peg != target_peg_idx:
-                h += 1  # Le disque n'est pas sur la bonne tour
-            else:
-                # Le disque est sur la tour cible. Vérifier s'il est bloqué par un plus petit en dessous.
-                target_peg_content = current_state_tuple[target_peg_idx]
-                # Les disques en dessous sont ceux avec un index plus petit sur la tour cible
-                for i in range(disk_found_at_index_on_peg):
-                    disk_underneath_size = target_peg_content[i]
-                    if disk_underneath_size < disk_to_check_size:
-                        h += 2  # Doit être déplacé puis remis
-                        break 
+            if tour_trouvee == -1:
+                # Cela ne devrait pas arriver dans un état valide de Hanoï si tous les disques sont suivis
+                continue
+
+            if tour_trouvee != idx_tour_cible:
+                h += 1  # Le disque n'est pas sur la bonne tour 
+            
         return h
 
-    def _generate_neighbors(self, current_state_tuple, num_pegs):
+    def _generer_voisins(self, etat_actuel_tuple, nb_tours):
         """
         Génère tous les états voisins valides à partir de l'état actuel.
         Retourne une liste de (etat_voisin_tuple, mouvement_tuple).
         mouvement_tuple est (index_tour_source, index_tour_destination).
+        Args:
+            etat_actuel_tuple (tuple): L'état courant sous forme de tuple de tuples.
+            nb_tours (int): Nombre de tours.
+        Returns:
+            list: Liste de tuples (état voisin, mouvement effectué).
         """
-        neighbors = []
+        voisins = []
         # Convertit l'état en listes de listes pour modification facile
-        list_of_peg_lists = [list(p) for p in current_state_tuple]
-        
+        liste_tours = [list(t) for t in etat_actuel_tuple]
+        #ex. [[4,2,3],[],[]]
+
         # Parcourt chaque tour comme source potentielle
-        for s_idx in range(num_pegs): # Index de la tour source
-            if not list_of_peg_lists[s_idx]: # Tour source vide
+        for idx_source in range(nb_tours):  # Index de la tour source
+            if not liste_tours[idx_source]:  # Tour source vide
                 continue
+
+            # Le disque à déplacer est le dernier de la liste (sommet de la tour source)
+            disque_a_deplacer = liste_tours[idx_source][-1]
             
-            # Le disque à déplacer est le dernier de la liste (sommet de la tour)
-            disk_to_move = list_of_peg_lists[s_idx][-1]
 
             # Parcourt chaque tour comme destination potentielle
-            for d_idx in range(num_pegs): # Index de la tour destination
-                if s_idx == d_idx: # Ne peut pas déplacer sur la même tour
+            for idx_dest in range(nb_tours):  # Index de la tour destination
+                if idx_source == idx_dest:  # Ne peut pas déplacer sur la même tour
                     continue
 
-                # Vérifie la validité du mouvement
+                # Vérifie la validité du mouvement idx_source -> idx_dest
                 # Mouvement valide si la destination est vide ou si le disque au sommet de la destination est plus grand
-                if not list_of_peg_lists[d_idx] or disk_to_move < list_of_peg_lists[d_idx][-1]:
+                if not liste_tours[idx_dest] or disque_a_deplacer < liste_tours[idx_dest][-1]:
                     # Mouvement valide: destination vide ou disque au sommet plus grand
-                    
+
                     # Crée une nouvelle copie de l'état pour ce voisin
-                    new_peg_lists = [list(p) for p in list_of_peg_lists] 
-                    moved_disk_val = new_peg_lists[s_idx].pop() # Enlève de la source
-                    new_peg_lists[d_idx].append(moved_disk_val) # Ajoute à la destination
-                    
+                    nouvelles_tours = [list(t) for t in liste_tours]
+                    val_deplacee = nouvelles_tours[idx_source].pop()  # Enlève de la source
+                    nouvelles_tours[idx_dest].append(val_deplacee)  # Ajoute à la destination
+
                     # Transforme la nouvelle configuration en tuple de tuples pour l'immuabilité
-                    neighbor_state_tuple = tuple(tuple(p) for p in new_peg_lists)
+                    voisin_tuple = tuple(tuple(t) for t in nouvelles_tours)
                     # Ajoute le voisin et le mouvement effectué à la liste
-                    neighbors.append((neighbor_state_tuple, (s_idx, d_idx)))
-        return neighbors
-    
-##########################################################
+                    voisins.append((voisin_tuple, (idx_source, idx_dest)))
+
+
+        
+        return voisins
 
 
 
@@ -255,111 +259,93 @@ class JeuHanoi:
             list[tuple[int, int]]: Liste des mouvements (tour départ, tour arrivée).
         """
         mouvements = []
+        self.mode_jeu = 'auto'
 
-        # Cas classique : résolution récursive pour l'ordre standard
-        if self.mode_aleatoire == False:
-            
-            def hanoi_recursif(n, source, destination, auxiliaire):
-                # Si il reste des disques à déplacer
-                if n > 0:
-                    # Déplacer n-1 disques de source vers auxiliaire en utilisant destination comme intermédiaire
-                    hanoi_recursif(n-1, source, auxiliaire, destination)
-                    
-                    # Déplacer le disque n de source vers destination
-                    mouvements.append((source.numero, destination.numero))
-                    
-                    # Déplacer n-1 disques de auxiliaire vers destination en utilisant source comme intermédiaire
-                    hanoi_recursif(n-1, auxiliaire, destination, source)
-            
-            # Appel initial de la fonction récursive avec toutes les tours
-            hanoi_recursif(self.nombre_disques, self.tours[0], self.tours[2], self.tours[1])
+        # --- Partie pour la résolution A* (mode_aleatoire = True) ---
+        nb_tours = len(self.tours)
+        if nb_tours == 0:  # Pas de tours définies
+            return []
 
-            return mouvements
+        # L'index 0-basé de la tour cible pour la logique interne de A* (ici la 3ème tour)
+        idx_tour_cible = 2
+        # Vérification de sécurité :
+        if idx_tour_cible >= nb_tours:
+            return []  # Erreur d'index
+
+        # Représente l'état initial sous forme de tuple de tuples (pour chaque tour, du fond au sommet)
+        etat_initial_tuple = tuple(tuple(d.taille for d in tour.disques) for tour in self.tours)
+        # ex. ((4, 2, 3), (), ())
+
+        # Liste des tailles de disques du plus petit au plus grand (pour l'heuristique)
+        liste_tailles_disques_asc = list(range(2, self.nombre_disques + 2))
+
+        if not liste_tailles_disques_asc:  # Pas de disques
+            return []
+
+        # Pré-calcul des disques pour la tour cible (du plus grand au plus petit)
+        disques_tour_cible = tuple(reversed(liste_tailles_disques_asc))
+        # Construction de l'état objectif (goal) : tous les disques sur la tour cible
+        etat_objectif_tuple = tuple(disques_tour_cible if i == idx_tour_cible else () for i in range(nb_tours))
+        #ex. ((), (), (4, 3, 2))
         
-        else :
-            # --- Partie pour la résolution A* (mode_aleatoire = True) ---
-            num_pegs = len(self.tours)
-            if num_pegs == 0: # Pas de tours définies
-                return []
 
-            # L'index 0-basé de la tour cible pour la logique interne de A* (ici la 3ème tour)
-            internal_target_peg_0_idx = 2 
-            # Vérification de sécurité :
-            if internal_target_peg_0_idx >= num_pegs:
-                # print(f"Erreur: internal_target_peg_0_idx ({internal_target_peg_0_idx}) est hors limites pour num_pegs ({num_pegs})")
-                return [] # Ou lever une exception
+        # Initialisation de la file de priorité (open_set) pour A*
+        file_priorite = []
+        # Calcul de l'heuristique initiale
+        h_initiale = self._calculer_heuristique(etat_initial_tuple, liste_tailles_disques_asc, idx_tour_cible)
+        
+        heapq.heappush(file_priorite, (h_initiale, etat_initial_tuple))
+        
+        # Dictionnaire pour retrouver le chemin (état précédent et mouvement)
+        provenance = {}
+        # Dictionnaire des coûts g(n) pour chaque état
+        cout_g = {etat_initial_tuple: 0}
 
-            # Représente l'état initial sous forme de tuple de tuples (pour chaque tour, du fond au sommet)
-            initial_state_tuple = tuple(tuple(d.taille for d in tour.disques) for tour in self.tours)
+        # Liste pour stocker les mouvements (index 0-basé)
+        chemin_mouvements_0_index = []
+
+        # Boucle principale de l'algorithme A*
+        while file_priorite:
+            score_f_courant, etat_courant = heapq.heappop(file_priorite)
             
-            # Liste des tailles de disques du plus petit au plus grand (pour l'heuristique)
-            all_disk_sizes_s_asc = list(range(2, self.nombre_disques + 2))
-            
-            if not all_disk_sizes_s_asc: # Pas de disques
-                return []
+            # Vérifie que le score f(n) est cohérent (sécurité)
+            if score_f_courant > cout_g[etat_courant] + self._calculer_heuristique(etat_courant, liste_tailles_disques_asc, idx_tour_cible):
+                continue
 
-            # Pré-calcul des disques pour la tour cible (du plus grand au plus petit)
-            disks_for_target_peg = tuple(reversed(all_disk_sizes_s_asc))
-            # Construction de l'état objectif (goal) : tous les disques sur la tour cible
-            goal_state_tuple = tuple(disks_for_target_peg if i == internal_target_peg_0_idx else () for i in range(num_pegs))
-            
-            # Initialisation de la file de priorité (open_set) pour A*
-            open_set = [] 
-            # Calcul de l'heuristique initiale
-            h_initial = self._calculate_heuristic(initial_state_tuple, all_disk_sizes_s_asc, internal_target_peg_0_idx)
-            heapq.heappush(open_set, (h_initial, initial_state_tuple))
+            # Si l'état objectif est atteint, on reconstitue le chemin
+            if etat_courant == etat_objectif_tuple:
+                etat_trace = etat_courant
+                while etat_trace in provenance:
+                    etat_precedent, mouvement_0_index = provenance[etat_trace]
+                    chemin_mouvements_0_index.append(mouvement_0_index)  # (source, destination)
+                    etat_trace = etat_precedent
+                break
 
-            # Dictionnaire pour retrouver le chemin (état précédent et mouvement)
-            came_from = {} 
-            # Dictionnaire des coûts g(n) pour chaque état
-            g_score = {initial_state_tuple: 0}
+            # Génère tous les voisins valides de l'état courant
+            for voisin_tuple, mouvement_tuple in self._generer_voisins(etat_courant, nb_tours):
+                cout_tentatif = cout_g[etat_courant] + 1
 
-            # Liste pour stocker les mouvements (index 0-basé)
-            path_0_indexed_moves = []
+                # Si ce chemin vers le voisin est meilleur que tout chemin précédent
+                if cout_tentatif < cout_g.get(voisin_tuple, float('inf')):
+                    provenance[voisin_tuple] = (etat_courant, mouvement_tuple)
+                    cout_g[voisin_tuple] = cout_tentatif
+                    # Calcul de l'heuristique pour le voisin
+                    h_voisin = self._calculer_heuristique(voisin_tuple, liste_tailles_disques_asc, idx_tour_cible)
+                    f_voisin = cout_tentatif + h_voisin
+                    heapq.heappush(file_priorite, (f_voisin, voisin_tuple))
 
-            # Boucle principale de l'algorithme A*
-            while open_set:
-                current_f_score, current_state = heapq.heappop(open_set)
-                
-                # Vérifie que le score f(n) est cohérent (sécurité)
-                if current_f_score > g_score[current_state] + self._calculate_heuristic(current_state, all_disk_sizes_s_asc, internal_target_peg_0_idx):
-                    continue
+        # Convertit les mouvements 0-indexés en mouvements utilisant Tour.numero
+        if chemin_mouvements_0_index:  # Si une solution a été trouvée
+            for idx_source, idx_dest in reversed(chemin_mouvements_0_index):  # Inverser pour l'ordre correct
+                # Vérifie la validité des index avant d'accéder à self.tours
+                if 0 <= idx_source < len(self.tours) and 0 <= idx_dest < len(self.tours):
+                    numero_source = self.tours[idx_source].numero
+                    numero_dest = self.tours[idx_dest].numero
+                    mouvements.append((numero_source, numero_dest))
+                else:
+                    # Gérer l'erreur : index invalide pour self.tours
+                    return []  # Solution invalide ou incomplète
 
-                # Si l'état objectif est atteint, on reconstitue le chemin
-                if current_state == goal_state_tuple:
-                    temp_trace_state = current_state
-                    while temp_trace_state in came_from:
-                        prev_trace_state, move_0_indexed_tuple = came_from[temp_trace_state]
-                        path_0_indexed_moves.append(move_0_indexed_tuple) # move_0_indexed_tuple est (s_idx, d_idx)
-                        temp_trace_state = prev_trace_state
-                    break 
-                
-                # Génère tous les voisins valides de l'état courant
-                for neighbor_s_tuple, move_m_tuple in self._generate_neighbors(current_state, num_pegs):
-                    tentative_g = g_score[current_state] + 1
-
-                    # Si ce chemin vers le voisin est meilleur que tout chemin précédent
-                    if tentative_g < g_score.get(neighbor_s_tuple, float('inf')):
-                        came_from[neighbor_s_tuple] = (current_state, move_m_tuple)
-                        g_score[neighbor_s_tuple] = tentative_g
-                        # Calcul de l'heuristique pour le voisin
-                        h_val_neighbor = self._calculate_heuristic(neighbor_s_tuple, all_disk_sizes_s_asc, internal_target_peg_0_idx)
-                        f_val_neighbor = tentative_g + h_val_neighbor
-                        heapq.heappush(open_set, (f_val_neighbor, neighbor_s_tuple))
-            
-            # Convertit les mouvements 0-indexés en mouvements utilisant Tour.numero
-            if path_0_indexed_moves: # Si une solution a été trouvée
-                for s_0_idx, d_0_idx in reversed(path_0_indexed_moves): # Inverser pour l'ordre correct
-                    # Vérifie la validité des index avant d'accéder à self.tours
-                    if 0 <= s_0_idx < len(self.tours) and 0 <= d_0_idx < len(self.tours):
-                        source_numero = self.tours[s_0_idx].numero
-                        dest_numero = self.tours[d_0_idx].numero
-                        mouvements.append((source_numero, dest_numero))
-                    else:
-                        # Gérer l'erreur : index invalide pour self.tours
-                        # print(f"Erreur: index de tour invalide ({s_0_idx}, {d_0_idx}) lors de la conversion des mouvements.")
-                        return [] # Solution invalide ou incomplète
-            
-            return mouvements
+        return mouvements
 
 

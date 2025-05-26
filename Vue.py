@@ -66,6 +66,12 @@ class Vue:
                                                    command=self.controleur.demarrer_resolution_auto)
         self.boutons["resolution_auto"].pack(side=tk.LEFT, padx=5)
         
+        self.boutons["aide_moi"] = tk.Button(frame_controles, text="Aide-moi",
+                                                    command=self.controleur.demander_aide)
+        self.boutons["aide_moi"].pack(side=tk.LEFT, padx=5)
+
+
+
         # Nombre de disques
         tk.Label(frame_controles, text="Nombre de disques:").pack(side=tk.LEFT, padx=5)
         
