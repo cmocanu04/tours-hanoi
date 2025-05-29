@@ -1,4 +1,3 @@
-
 import tkinter as tk
 
 from tkinter.simpledialog import askstring
@@ -21,17 +20,19 @@ class Vue:
         self.controleur = controleur
         self.fenetre = tk.Tk()
         self.fenetre.title("Tours de Hanoï")
-        self.fenetre.geometry("800x600")
+        self.fenetre.geometry("1000x800")
 
         
         
         self.etiquettes = {}
         self.boutons = {}
         self.champs_texte = {}
+        self.champs_chrono = None
+        self.champs_quiz = None
         self.tour_selectionnee = None
         
-        self.canvas = tk.Canvas(self.fenetre, width=800, height=400, bg="lightgray")
-        self.canvas.pack(pady=10)
+        self.canvas = tk.Canvas(self.fenetre, width=1000, height=600, bg="lightgray")
+        self.canvas.pack(pady=20)
         
         self.canvas.bind("<Button-1>", self.gerer_clic)
         
@@ -48,10 +49,10 @@ class Vue:
             None
         """
         # Frame pour les contrôles
-        # On utilise frame - widget conteneur de tkinter
-
         frame_controles = tk.Frame(self.fenetre)
-        frame_controles.pack(fill=tk.X, padx=10, pady=5)
+        frame_controles.pack(fill=tk.X, padx=10, pady=10)
+        frame_controles.pack_propagate(False)
+        frame_controles.configure(height=50)
         
         # Boutons de contrôle
         self.boutons["nouvelle_partie"] = tk.Button(frame_controles, text="Nouvelle Partie", 
@@ -84,7 +85,9 @@ class Vue:
         
         # Frame pour les informations
         frame_info = tk.Frame(self.fenetre)
-        frame_info.pack(fill=tk.X, padx=10, pady=5)
+        frame_info.pack(fill=tk.X, padx=10, pady=10)
+        frame_info.pack_propagate(False)
+        frame_info.configure(height=50)
         
         # Chronomètre, score et nombre de coups
         self.etiquettes["chrono"] = tk.Label(frame_info, text="Temps: 0s")
@@ -108,53 +111,43 @@ class Vue:
         """
         self.canvas.delete("all")
         
-        # Dessiner les bases des tours
-        largeur_base = 200
-        hauteur_base = 20
-        espacement = 250
-        
+        # Centrage et dimensions adaptés
+        largeur_base = 250
+        hauteur_base = 30
+        espacement = 320
+        x_depart = 180
+        y_base = 550
+        y_haut_tige = 240
         for i in range(3):
-            x_base = 150 + i * espacement
-            y_base = 350
-            
+            x_base = x_depart + i * espacement
             # Base horizontale
             self.canvas.create_rectangle(x_base - largeur_base/2, y_base, 
                                         x_base + largeur_base/2, y_base + hauteur_base, 
                                         fill="brown")
-            
             # Tige verticale
-            self.canvas.create_rectangle(x_base - 5, 100, x_base + 5, y_base, fill="brown")
-            
+            self.canvas.create_rectangle(x_base - 7, y_haut_tige, x_base + 7, y_base, fill="brown")
             # Numéro de la tour
-            self.canvas.create_text(x_base, y_base + 30, text=f"Tour {i+1}", font=("Arial", 12))
-            
+            self.canvas.create_text(x_base, y_base + 40, text=f"Tour {i+1}", font=("Arial", 16))
             # Ajouter un contour si la tour est sélectionnée
             if self.tour_selectionnee == i:
                 self.canvas.create_rectangle(
-                    x_base - largeur_base/2 - 5, 100 - 5,
-                    x_base + largeur_base/2 + 5, y_base + hauteur_base + 5,
-                    outline="black", width=3
+                    x_base - largeur_base/2 - 7, y_haut_tige - 7,
+                    x_base + largeur_base/2 + 7, y_base + hauteur_base + 7,
+                    outline="black", width=4
                 )
         
         # Dessiner les disques
         for i, tour in enumerate(jeu.tours):
-            x_centre = 150 + i * espacement
-            y_base = 350
-            
+            x_centre = x_depart + i * espacement
             for j, disque in enumerate(tour.disques):
-                # Calculer la largeur du disque proportionnellement à sa taille
-                largeur_disque = 30 + disque.taille * 20
-                
-                # Position verticale (empilé du bas vers le haut)
-                y_pos = y_base - (j + 1) * 20
-                
+                largeur_disque = 28 + disque.taille * 25
+                epaisseur_disque = 24  # plus épais
+                y_pos = y_base - (j + 1) * (epaisseur_disque + 2)
                 self.canvas.create_rectangle(
                     x_centre - largeur_disque/2, y_pos,
-                    x_centre + largeur_disque/2, y_pos + 15,
+                    x_centre + largeur_disque/2, y_pos + epaisseur_disque,
                     fill=disque.couleur, outline="black"
                 )
-                
-                # Ne pas afficher la taille du disque (supprimé selon les instructions)
         
         # Mettre à jour les informations
         self.etiquettes["chrono"].config(text=f"Temps: {int(jeu.chrono)}s")
@@ -194,12 +187,11 @@ class Vue:
             event (tkinter.Event): Objet événement contenant les coordonnées du clic.
         """
         x, y = event.x, event.y
-        
-        # Déterminer quelle tour a été cliquée
-        espacement = 250
+        espacement = 320
+        x_depart = 180
         for i in range(3):
-            x_centre = 150 + i * espacement
-            if x_centre - 100 <= x <= x_centre + 100 and y <= 350:
+            x_centre = x_depart + i * espacement
+            if x_centre - 125 <= x <= x_centre + 125 and y <= 550:
                 self.tour_selectionnee = i
                 self.controleur.traiter_clic_tour(i)
                 self.afficher_tout(self.controleur.jeuhanoi)

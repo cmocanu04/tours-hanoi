@@ -9,7 +9,7 @@ from Controleur import Controleur
 
 # Programme principal
 if __name__ == "__main__":  
-    controleur = Controleur()
+    controleur = Controleur() 
     controleur.vue.fenetre.mainloop()
 
     
