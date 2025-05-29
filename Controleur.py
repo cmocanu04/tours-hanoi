@@ -166,6 +166,9 @@ class Controleur:
         """
         Récupère le premier mouvement de la résolution automatique
         et l'exécute pour aider le joueur.
+
+        Returns:
+            None
         """
         if not self.jeuhanoi.etat_partie: # Vérifier si une partie est en cours
             messagebox.showinfo("Aide", "Aucune partie en cours pour recevoir de l'aide.")
@@ -173,7 +176,7 @@ class Controleur:
 
         # Obtenir la séquence complète de mouvements à partir de l'état actuel
         mouvements_aide = self.jeuhanoi.resoudre_automatiquement() #
-
+        
         if mouvements_aide: # S'il y a des mouvements disponibles
             # Récupérer le tout premier mouvement
             depart_num, arrivee_num = mouvements_aide[0] 
@@ -183,8 +186,9 @@ class Controleur:
             tour_arrivee_obj = self.jeuhanoi.tours[arrivee_num - 1]
 
             # Exécuter ce premier mouvement
+            self.jeuhanoi.mode_jeu = 'manuel'
             self.gerer_deplacement_joueur(tour_depart_obj, tour_arrivee_obj, resolution_auto=False) 
-
+            
 
 
 

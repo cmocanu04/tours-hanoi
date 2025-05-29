@@ -3,7 +3,6 @@ from Tour import Tour
 import random
 import time
 import copy
-
 import heapq
 
 
@@ -108,6 +107,8 @@ class JeuHanoi:
 
         Args:
             points (int): Nombre de points à ajouter.
+        Returns:
+            None
         """
         self.score += points
   
@@ -126,6 +127,9 @@ class JeuHanoi:
     def demarrer_chrono(self):
         """
         Lance le chronomètre de la partie.
+        
+        Returns:
+            None
         """
         self.temps_debut = time.time()
         self.chrono = 0
@@ -160,7 +164,6 @@ class JeuHanoi:
         return disques
     
     
-    ###############################
 
     def _calculer_heuristique(self, etat_actuel_tuple, liste_tailles_disques_asc, idx_tour_cible):
         """
@@ -170,6 +173,7 @@ class JeuHanoi:
             etat_actuel_tuple (tuple): L'état courant sous forme de tuple de tuples.
             liste_tailles_disques_asc (list): Liste des tailles de disques du plus petit au plus grand.
             idx_tour_cible (int): Index de la tour cible.
+
         Returns:
             int: Valeur heuristique pour l'état courant.
         """
@@ -244,16 +248,21 @@ class JeuHanoi:
                     # Ajoute le voisin et le mouvement effectué à la liste
                     voisins.append((voisin_tuple, (idx_source, idx_dest)))
 
-
-        
         return voisins
 
 
 
+
+############################################################################################################
+
     def resoudre_automatiquement(self):
         """
-        Résout le jeu automatiquement en utilisant l'algorithme récursif (pour l'ordre standard)
-        ou l'algorithme A* (pour l'ordre aléatoire).
+        ####################### Utilisation d'outils IA - GEMINI #################################
+        ### Adaptation de l'algorithme de recherche du meilleur chemin A* pour le cas de notre jeu. ###
+
+        
+        La fonction résout le jeu automatiquement en utilisant l'algorithme l'algorithme de recherche
+        A* (pour l'ordre Normal et Aléatoire).
 
         Returns:
             list[tuple[int, int]]: Liste des mouvements (tour départ, tour arrivée).
@@ -349,3 +358,4 @@ class JeuHanoi:
         return mouvements
 
 
+############################################################################################################

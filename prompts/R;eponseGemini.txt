@@ -1,0 +1,137 @@
+L'algorithme de recherche A\* (prononcé "A étoile") est un algorithme de recherche de chemin très populaire et efficace. Il est utilisé pour trouver le chemin le plus court entre un nœud de départ et un nœud d'arrivée dans un graphe. Il combine les avantages de la recherche uniforme (Dijkstra) et de la recherche gloutonne (Best-First Search).
+
+Voici comment il fonctionne et comment vous pouvez l'intégrer pour résoudre les Tours de Hanoï, même avec une configuration initiale aléatoire, tout en respectant les règles du jeu :
+
+### Principes de l'Algorithme A\*
+
+A\* évalue chaque nœud (configuration du jeu) en utilisant une fonction d'évaluation, $f(n)$, définie comme suit :
+
+$f(n) = g(n) + h(n)$
+
+Où :
+* **$n$** est le nœud actuel (une configuration spécifique des disques sur les tours).
+* **$g(n)$** est le **coût réel** pour atteindre le nœud $n$ depuis le nœud de départ. Dans le cas des Tours de Hanoï, $g(n)$ est simplement le **nombre de déplacements de disques effectués** pour arriver à la configuration $n$.
+* **$h(n)$** est la **fonction heuristique** qui estime le coût pour atteindre le nœud objectif (la configuration finale souhaitée) depuis le nœud $n$. C'est une "estimation éclairée" du coût restant. La qualité de l'heuristique est cruciale pour l'efficacité de A\*.
+* **$f(n)$** est donc une estimation du coût total du chemin le plus court passant par $n$.
+
+**Fonctionnement général de A\* :**
+
+1.  **Initialisation :**
+    * Créer une **liste ouverte (open list)** : une liste de priorité contenant les nœuds à évaluer, triée par la valeur $f(n)$ la plus basse.
+    * Créer une **liste fermée (closed list)** : un ensemble contenant les nœuds déjà évalués pour éviter les cycles et les réévaluations.
+    * Ajouter le nœud de départ à la liste ouverte. Son $g(n)$ est 0, et son $h(n)$ est calculé.
+
+2.  **Boucle principale :**
+    * Tant que la liste ouverte n'est pas vide :
+        * Choisir le nœud $n$ de la liste ouverte qui a la plus petite valeur $f(n)$.
+        * Si $n$ est le nœud objectif, reconstruire le chemin à partir des informations stockées (généralement en remontant les "parents" des nœuds) et retourner la solution.
+        * Retirer $n$ de la liste ouverte et l'ajouter à la liste fermée.
+        * **Générer les successeurs de $n$ :** Pour chaque mouvement de disque valide à partir de la configuration $n$ (respectant les règles de Hanoï), créer un nœud successeur $m$.
+        * Pour chaque successeur $m$ :
+            * Si $m$ est dans la liste fermée, l'ignorer (on a déjà trouvé un meilleur chemin ou un chemin équivalent vers lui).
+            * Calculer $g(m) = g(n) + \text{coût pour aller de } n \text{ à } m$ (dans Hanoï, ce coût est toujours 1).
+            * Calculer $h(m)$ en utilisant la fonction heuristique.
+            * Si $m$ n'est pas dans la liste ouverte OU si le nouveau chemin vers $m$ (via $n$) est meilleur (c'est-à-dire $g(m)$ est plus petit que son ancienne valeur $g$ s'il était déjà dans la liste ouverte) :
+                * Mettre à jour le parent de $m$ comme étant $n$.
+                * Mettre à jour $g(m)$ et $f(m)$.
+                * Si $m$ n'était pas dans la liste ouverte, l'ajouter. Sinon, mettre à jour sa priorité dans la liste ouverte.
+
+### Intégration de A\* pour les Tours de Hanoï (avec configuration aléatoire)
+
+1.  **Représentation d'un État (Nœud) :**
+    * Un état peut être représenté par la position de chaque disque. Par exemple, un tableau (ou une liste de listes) où chaque sous-liste représente une tour et contient les disques qui s'y trouvent, de bas en haut.
+    * Exemple : `[[3, 2], [1], []]` signifie que la tour 0 a les disques 3 et 2 (3 en bas), la tour 1 a le disque 1, et la tour 2 est vide.
+    * **État de départ :** Votre configuration aléatoire initiale sur la première tour (ex: `[[1, 3, 2], [], []]` si 3 disques, mais attention, cette configuration viole les règles si 1 est en dessous de 3. A\* partira d'un état *valide* même s'il est "aléatoire" dans le sens où ce n'est pas l'état initial classique). Si votre "aléatoire" signifie que les disques sont sur la première tour mais dans un ordre qui ne respecte pas la règle (petit sur grand), alors A\* ne pourra pas démarrer. Il faut que l'état initial respecte les contraintes fondamentales pour pouvoir générer des successeurs. Si "aléatoire" signifie "n'importe quelle distribution valide des disques sur les trois tours", alors c'est un point de départ standard pour A\*.
+    * **État objectif :** Tous les disques sur la tour de destination (ex: tour C), empilés correctement (le plus grand en bas, le plus petit en haut). Ex: `[[], [], [3, 2, 1]]` pour 3 disques sur la tour 2.
+
+2.  **Génération des Successeurs (Mouvements Valides) :**
+    * À partir d'un état donné, identifiez tous les mouvements de disques possibles qui respectent les règles de Hanoï :
+        * On ne peut déplacer qu'un seul disque à la fois (le disque supérieur d'une tour).
+        * Un disque ne peut être déplacé que vers une tour vide ou sur un disque plus grand que lui.
+    * Pour chaque mouvement valide, un nouvel état (nœud successeur) est créé.
+
+3.  **Calcul de $g(n)$ :**
+    * $g(n)$ est simplement le nombre de mouvements effectués depuis l'état initial pour atteindre l'état $n$. Chaque fois que vous générez un successeur, son $g$ sera $g(\text{parent}) + 1$.
+
+4.  **Conception de la Fonction Heuristique $h(n)$ :**
+    * C'est la partie la plus délicate et la plus importante pour l'efficacité de A\*. L'heuristique doit être :
+        * **Admissible :** Elle ne doit jamais surestimer le coût réel pour atteindre l'objectif. C'est-à-dire, $h(n) \le \text{coût réel de } n \text{ à l'objectif}$. Si l'heuristique n'est pas admissible, A\* n'est pas garanti de trouver le chemin le plus court.
+        * **Consistante (ou monotone) :** Pour tout nœud $n$ et tout successeur $m$ de $n$, $h(n) \le \text{coût}(n,m) + h(m)$. Si l'heuristique est consistante, elle est aussi admissible. Une heuristique consistante garantit que lorsqu'un nœud est retiré de la liste ouverte, on a déjà trouvé le chemin optimal vers lui.
+    * **Exemples d'heuristiques pour les Tours de Hanoï :**
+        * **Heuristique simple (nombre de disques mal placés) :** Comptez le nombre de disques qui ne sont pas sur leur tour de destination finale. C'est admissible, mais pas très informative.
+        * **Heuristique améliorée (basée sur le plus grand disque mal placé) :**
+            * Trouvez le plus grand disque $k$ qui n'est pas encore sur sa tour de destination dans la position correcte (c'est-à-dire, tous les disques plus grands que lui sont déjà en dessous de lui sur la tour de destination).
+            * Pour déplacer ce disque $k$ vers sa destination, il faut au moins :
+                1.  Déplacer les $k-1$ disques plus petits qui sont actuellement au-dessus de lui vers une autre tour (si $k$ n'est pas déjà le disque supérieur de sa tour actuelle).
+                2.  Déplacer le disque $k$ vers sa destination.
+                3.  Déplacer les $k-1$ disques plus petits de l'autre tour vers la destination, au-dessus de $k$.
+            * Cette heuristique est plus complexe à calculer précisément. Une simplification : le coût minimal pour déplacer le plus grand disque $k$ qui est mal placé vers sa destination est d'au moins 1 (pour le déplacer lui-même). Si des disques plus petits sont au-dessus de lui sur sa tour actuelle, ils devront être déplacés. Si des disques plus petits sont sur la tour de destination à la place où $k$ devrait aller, ils devront aussi être déplacés.
+        * **Heuristique "optimiste" basée sur la solution standard :**
+            Si le disque $N$ (le plus grand) n'est pas sur la tour de destination, il faudra au moins $2^{N-1}$ mouvements pour le mettre en place dans un scénario idéal (sans compter les mouvements pour les disques déjà présents sur la tour de destination qui pourraient bloquer). Ce type d'heuristique est difficile à rendre admissible pour des configurations arbitraires.
+        * **Une heuristique souvent utilisée et admissible :**
+            Pour chaque disque $i$ (de 1 à $N$) :
+            Si le disque $i$ n'est pas sur sa tour de destination finale $T_D$, ou s'il est sur $T_D$ mais qu'un disque $j < i$ est en dessous de lui sur $T_D$, alors le disque $i$ est "mal placé".
+            L'heuristique pourrait être la somme des "coûts minimaux" pour placer chaque disque mal placé. Une approximation simple : $h(n) = \text{nombre de disques qui ne sont pas sur la tour de destination}$.
+            Une meilleure heuristique : pour le plus grand disque $k$ qui n'est pas à sa place finale (sur la tour de destination avec tous les disques $>k$ en dessous), on sait qu'il faudra au moins un mouvement pour lui, plus les mouvements des $k-1$ disques plus petits. Le coût minimal pour déplacer une pile de $k-1$ disques est $2^{k-1}-1$.
+            Donc, si le disque $k$ est le plus grand disque mal placé : $h(n) \ge 1$ (pour déplacer $k$) + éventuellement le coût de déplacer les disques qui sont au-dessus de $k$ ou qui sont sur sa position cible sur la tour de destination.
+
+            Une heuristique admissible et raisonnablement efficace est de considérer le plus grand disque $D_k$ qui n'est pas à sa position finale (c'est-à-dire, pas sur la tour de destination avec tous les disques $D_{k+1} \dots D_N$ en dessous de lui). Pour placer $D_k$, tous les disques $D_1 \dots D_{k-1}$ doivent être sur une unique autre tour. Le coût pour cela est lié à $2^{k-1}$.
+            $h(n) = \sum_{i=1}^{N} \text{poids}_i \times \text{estMalPlacé}(i)$
+            où $\text{estMalPlacé}(i)$ est 1 si le disque $i$ n'est pas sur sa tour de destination finale, au-dessus de tous les disques $j > i$ déjà sur cette tour. Le $\text{poids}_i$ peut être $2^{i-1}$ si on considère que ce disque devra être bougé au moins comme s'il était la base d'une sous-pile.
+
+            **Une heuristique admissible et souvent utilisée pour Hanoï est :**
+            Pour chaque disque $i$ (du plus grand au plus petit) :
+            Si la tour actuelle du disque $i$ n'est pas la même que la tour de destination du disque $i$ (dans la solution finale), alors l'heuristique est incrémentée de $2^{i-1}$. Cette heuristique compte essentiellement le nombre de mouvements "directs" de sous-piles. Cependant, cela suppose que les disques plus petits sont déjà au-dessus.
+
+            **Pour une configuration *aléatoire*, une heuristique plus directe :**
+            $h(n) = 0$. C'est l'algorithme de Dijkstra, qui est admissible et trouvera la solution optimale, mais peut être lent.
+            $h(n) = \text{nombre de disques qui ne sont pas sur leur tour de destination finale.}$ C'est admissible.
+            $h(n) = \text{nombre de disques qui ne sont pas sur leur tour de destination finale ou qui sont sur leur tour de destination mais avec un disque plus petit en dessous.}$
+
+            La "Pattern Database" (PDB) est une technique avancée où l'on précalcule les coûts exacts pour résoudre des sous-problèmes (par exemple, placer correctement les N/2 plus grands disques).
+
+            **Pour votre cas (configuration aléatoire sur la première tour) :**
+            Une heuristique simple mais efficace :
+            Pour chaque disque $i$ (de 1 à $N$) :
+            * Si le disque $i$ n'est pas sur la tour de destination : $h(n) += 1$.
+            * Plus sophistiqué : Si le disque $i$ n'est pas sur la tour de destination, et que sa "tour cible" (pour le déplacer vers la destination) n'est pas la tour auxiliaire qu'il utiliserait dans la solution standard, ajoutez plus de poids.
+
+            Considérez l'heuristique où pour chaque disque $i$, s'il n'est pas sur la tour de destination, cela coûtera au moins un coup pour le déplacer. De plus, s'il y a des disques plus petits sur la tour de destination là où $i$ devrait aller, ils devront être déplacés.
+
+            **Une heuristique pratique et admissible pour une configuration initiale "désordonnée" (mais valide) :**
+            Pour le plus grand disque $k$ qui n'est pas sur la tour de destination $T_D$ ou qui est sur $T_D$ mais avec des disques plus petits que lui en dessous :
+            $h(n) = $ (nombre de disques au-dessus de $k$ sur sa tour actuelle) + 1 (pour déplacer $k$) + (nombre de disques sur $T_D$ qui sont plus petits que $k$ et qui devront être déplacés de $T_D$ pour faire de la place à $k$).
+            Cette heuristique est locale et ne capture pas toute la complexité, mais elle est admissible.
+
+5.  **Liste Ouverte et Liste Fermée :**
+    * La **liste ouverte** doit être une file de priorité qui extrait toujours le nœud avec le plus petit $f(n)$.
+    * La **liste fermée** stocke les états déjà visités pour éviter de les traiter à nouveau et pour éviter les cycles. Il est important de stocker l'état lui-même (la configuration des disques) dans la liste fermée.
+
+### Étapes d'Implémentation (Résumé) :
+
+1.  **Définir la structure de données pour un état** (positions des disques sur les 3 tours).
+2.  **Définir l'état initial** (votre configuration aléatoire) et **l'état final** (tous les disques sur la tour cible, ordonnés).
+3.  **Implémenter une fonction pour générer les successeurs valides** d'un état donné (en respectant les règles de Hanoï).
+4.  **Choisir et implémenter une fonction heuristique $h(n)$ admissible.** Une heuristique simple pour commencer : le nombre de disques qui ne sont pas sur leur tour de destination finale.
+5.  **Implémenter l'algorithme A\* :**
+    * Initialiser la liste ouverte avec l'état de départ ($g=0$, calculer $h$).
+    * Initialiser la liste fermée (vide).
+    * Boucler :
+        * Prendre l'état $s$ avec le $f$ minimal de la liste ouverte.
+        * Si $s$ est l'état final, reconstruire et retourner le chemin.
+        * Ajouter $s$ à la liste fermée.
+        * Générer les successeurs $s'$ de $s$.
+        * Pour chaque $s'$ :
+            * Si $s'$ est dans la liste fermée, ignorer.
+            * Calculer $g(s') = g(s) + 1$.
+            * Calculer $h(s')$.
+            * Si $s'$ est dans la liste ouverte avec un $g$ plus grand, mettre à jour son $g$, $f$, et son parent.
+            * Sinon (si $s'$ n'est pas dans la liste ouverte), l'ajouter à la liste ouverte avec son $g$, $h$, $f$, et $s$ comme parent.
+
+**Points importants pour Hanoï :**
+
+* Le coût de transition entre états est toujours 1 (un mouvement).
+* Le nombre d'états possibles peut être grand ($3^N$ où $N$ est le nombre de disques), donc une bonne heuristique est cruciale pour éviter d'explorer trop d'états. Pour un nombre de disques élevé, A\* peut devenir très lent si l'heuristique n'est pas assez précise.
+* Assurez-vous que votre "configuration aléatoire" de départ respecte la règle de base (un disque plus grand ne peut pas être sur un plus petit) sur la tour de départ. Si ce n'est pas le cas, le problème est mal défini par rapport aux règles de Hanoï dès le début. A\* opère sur des transitions d'états valides vers d'autres états valides.
+
+L'intégration de A\* demande une bonne compréhension de ses mécanismes et une conception soignée de l'heuristique pour obtenir de bonnes performances tout en garantissant l'optimalité (si l'heuristique est admissible).

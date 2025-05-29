@@ -207,6 +207,7 @@ class Vue:
 
     def update_chrono(self):
         """Met à jour le chronomètre toutes les 100ms"""
+        
         if self.controleur.jeuhanoi.etat_partie:
             temps_ecoule = time.time() - self.controleur.jeuhanoi.temps_debut
             self.controleur.jeuhanoi.chrono = temps_ecoule 
