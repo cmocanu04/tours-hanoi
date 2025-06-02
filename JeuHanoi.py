@@ -165,7 +165,7 @@ class JeuHanoi:
     
     
 
-    def _calculer_heuristique(self, etat_actuel_tuple, liste_tailles_disques_asc, idx_tour_cible):
+    def calculer_heuristique(self, etat_actuel_tuple, liste_tailles_disques_asc, idx_tour_cible):
         """
         Calcule l'heuristique h(n) pour l'état actuel.
         Heuristique : Pour chaque disque i, si non sur la tour cible, +1.
@@ -203,7 +203,7 @@ class JeuHanoi:
             
         return h
 
-    def _generer_voisins(self, etat_actuel_tuple, nb_tours):
+    def generer_voisins(self, etat_actuel_tuple, nb_tours):
         """
         Génère tous les états voisins valides à partir de l'état actuel.
         Retourne une liste de (etat_voisin_tuple, mouvement_tuple).
@@ -301,7 +301,7 @@ class JeuHanoi:
         # Initialisation de la file de priorité (open_set) pour A*
         file_priorite = []
         # Calcul de l'heuristique initiale
-        h_initiale = self._calculer_heuristique(etat_initial_tuple, liste_tailles_disques_asc, idx_tour_cible)
+        h_initiale = self.calculer_heuristique(etat_initial_tuple, liste_tailles_disques_asc, idx_tour_cible)
         
         heapq.heappush(file_priorite, (h_initiale, etat_initial_tuple))
         
@@ -318,7 +318,7 @@ class JeuHanoi:
             score_f_courant, etat_courant = heapq.heappop(file_priorite)
             
             # Vérifie que le score f(n) est cohérent (sécurité)
-            if score_f_courant > cout_g[etat_courant] + self._calculer_heuristique(etat_courant, liste_tailles_disques_asc, idx_tour_cible):
+            if score_f_courant > cout_g[etat_courant] + self.calculer_heuristique(etat_courant, liste_tailles_disques_asc, idx_tour_cible):
                 continue
 
             # Si l'état objectif est atteint, on reconstitue le chemin
@@ -331,7 +331,7 @@ class JeuHanoi:
                 break
 
             # Génère tous les voisins valides de l'état courant
-            for voisin_tuple, mouvement_tuple in self._generer_voisins(etat_courant, nb_tours):
+            for voisin_tuple, mouvement_tuple in self.generer_voisins(etat_courant, nb_tours):
                 cout_tentatif = cout_g[etat_courant] + 1
 
                 # Si ce chemin vers le voisin est meilleur que tout chemin précédent
@@ -339,7 +339,7 @@ class JeuHanoi:
                     provenance[voisin_tuple] = (etat_courant, mouvement_tuple)
                     cout_g[voisin_tuple] = cout_tentatif
                     # Calcul de l'heuristique pour le voisin
-                    h_voisin = self._calculer_heuristique(voisin_tuple, liste_tailles_disques_asc, idx_tour_cible)
+                    h_voisin = self.calculer_heuristique(voisin_tuple, liste_tailles_disques_asc, idx_tour_cible)
                     f_voisin = cout_tentatif + h_voisin
                     heapq.heappush(file_priorite, (f_voisin, voisin_tuple))
 
