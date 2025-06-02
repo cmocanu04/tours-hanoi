@@ -1,0 +1,46 @@
+Notre programme utilise l'Algorithme de recherche A* pour trouver le meilleur chemin afin de résoudre le jeu.
+
+Pourquoi avoir choisi cet algorithm et non pas un autre?
+
+1. A* utilise une heuristique pour guider la recherche
+A* combine le coût réel déjà parcouru (g(n)) et une estimation du coût restant (h(n), l’heuristique) pour choisir le prochain état à explorer.
+Dans le cas du jeu de Hanoï, nous avons choisi d'utiliser l’heuristique « combien de disques ne sont pas encore sur la tour d’arrivée (Tour 3) ».
+Cela permet à l’algorithme de se concentrer sur les états qui semblent rapprocher le plus rapidement de la solution.
+
+2. Dijkstra explore tout de façon uniforme
+Dijkstra explore tous les chemins possibles de manière équitable, sans tenir compte de la proximité de l’objectif. 
+Il garantit le chemin le plus court, mais il ne fait aucune supposition sur la direction à prendre. Cela signifie que Dijkstra peut explorer beaucoup d’états inutiles, surtout dans des cas comme, par exemple, quand on a un nombre plus grand de disques dans le jeu de Hanoï.
+
+
+
+
+Le fonctionnement général de l'algorithme A* (pour le cas de notre jeu):
+
+Notre algorithme cherche à minimiser le cout et trouver le meilleur chemin. 
+Pour cela l'algorithme A* utilise une fonction cout s'écrivant : f(n) = g(n) + h(n) où n - c'est un noeud ( ou un état de jeu)
+
+h(n):
+
+L'heuristique est calculée pour un un noeud.
+Pour tous les disques, qui ne sont pas situés sur la Tour 3 (dernière Tour) on incremente h(n) avec 1.
+Ex. pour le noeud ((3,4,2),(),()) l'heuristique est h(n)=3
+Ex. pour le noeud ((4,5,3,2),(),()) l'heuristique est h(n)=4
+Ex. pour le noeud ((4,5,3),(),(2)) l'heuristique est h(n)=3 (car le disque 2, est placé sur la troisième tour)
+
+g(n):
+C'est le cout pour atteindre cet état actuel. (= nb total des deplacements jusqu'à maintenant)
+Ex. 	pour un noeud - début du jeu - ((3,4,2),(),()) -> g(n) = 0
+	pour son noeud voisin ((3,4),(2),()) -> g(n) = 1
+
+Ex. 	pour un noeud - début du jeu - ((3,4,2),(),()) -> g(n) = 0
+	pour le noeud ((3),(),(4,2)) -> g(n) = 3 ( car on a fait: ((3,4,2),(),())->((3,4),(2),())->((3),(2),(4))->((3),(),(4,2)) Donc 3 mouvements)
+
+
+Et donc à chaque itération, l'algorithme :
+	Prend un noeud à partir de la structure min-heap (qui elle, se comporte comme une file prioritaire qui fait en sorte que le noeud qui a le cout f(noeud) le plus petit sera le premier à traiter, et le noeud avec le cout le plus grand dernier
+	En utilisant la fonction generer_voisins on crée toutes les possibilités de jeu (noeuds voisins), à partir de notre noeud actuel, en utilisant un seul mouvement valide!
+	Pour chaque noeud voisin, calcule le cout total f(noeud)
+	Les nouveaux noeuds voisins sont mis dans la structure de données min-heap qui, fait une prioritisation des noeuds 
+	On itère jusqu'à ce que le noeud_final soit extrait de notre structure min-heap (file_prioritaire) où noeud_final - c'est l'état de jeu où tous les disques sont dans le bon ordre sur la dernière tour
+
+À la fin, on réconstruit le chemin avec un dictionnaire (nommé provenance)
