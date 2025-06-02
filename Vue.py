@@ -71,7 +71,11 @@ class Vue:
                                                     command=self.controleur.demander_aide)
         self.boutons["aide_moi"].pack(side=tk.LEFT, padx=5)
 
+        # Bouton Quitter
+        self.boutons["quitter"] = tk.Button(frame_controles, text="Quitter", command=self.fenetre.destroy)
+        self.boutons["quitter"].pack(side=tk.RIGHT, padx=20)
 
+        
 
         # Nombre de disques
         tk.Label(frame_controles, text="Nombre de disques:").pack(side=tk.LEFT, padx=5)
